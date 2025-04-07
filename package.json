@@ -14,7 +14,7 @@
     "url": "git+https://github.com/KaedeYure/reski.git"
   },
   "peerDependencies": {
-    "fs":"latest",
+    "fs":"^0.0.1-security",
     "chalk": "latest"
   },
   "keywords": [

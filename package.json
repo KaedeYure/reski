@@ -13,11 +13,6 @@
     "type": "git",
     "url": "git+https://github.com/KaedeYure/reski.git"
   },
-  "dependencies": {
-    "fs":"^0.0.1-security",
-    "chalk": "latest",
-    "path": "^0.12.7"
-  },
   "keywords": [
     "reski",
     "component",

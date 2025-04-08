@@ -15,7 +15,8 @@
   },
   "peerDependencies": {
     "fs":"^0.0.1-security",
-    "chalk": "latest"
+    "chalk": "latest",
+    "path": "0.12.7"
   },
   "keywords": [
     "reski",

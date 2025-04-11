@@ -1,11 +1,11 @@
 {
   "name": "reski",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Reski is a declarative UI definition format that uses a structured, hierarchical syntax to describe component-based user interfaces.",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "node test.js",
+    "dev": "node test.js",
     "start": "node index.js"
   },
   "repository": {

@@ -1,7 +1,7 @@
 # Reski
 
 <div align="center">
-  <img src="https://via.placeholder.com/200x200?text=Reski" alt="Reski Logo" width="200" height="200" />
+  <h2>[ R:e:s:k:i ]</h2>
   <h3>A compact notation for UI components that brings the power of JSON to markup</h3>
 </div>
 

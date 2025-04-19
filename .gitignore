@@ -4,3 +4,5 @@ rollup.config.js
 test.js
 vscode
 dist
+__tests__
+adapters

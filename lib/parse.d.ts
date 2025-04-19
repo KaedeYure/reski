@@ -1,48 +1,101 @@
-import { ReskiObject, ReskiString, ReskiTextNode } from './types';
+/**
+ * Reski Parser TypeScript Definitions
+ */
 
 /**
- * Parses a Reski String into a structured object
- * 
- * @param ReskiString - The Reski String to parse
- * @returns The parsed Reski structure
- * @throws Error if the string is not a valid Reski String
- * 
- * @example
- * ```
- * // Parse a simple Reski String
- * const reski = parse('[div:container.flex:[p:"Hello World"]]');
- * // Result:
- * // {
- * //   name: 'div',
- * //   classes: ['container', 'flex'],
- * //   children: [
- * //     {
- * //       name: 'text',
- * //       content: 'Hello World'
- * //     }
- * //   ]
- * // }
- * ```
+ * Options for the Reski parser
  */
-export default function parse(string: ReskiString): ReskiObject;
+export interface ReskiParserOptions {
+  /** Keys that cannot be overwritten in dynamic data */
+  restrictOverwrite?: string[];
+  /** Enable detailed debug logging */
+  debug?: boolean;
+}
 
 /**
- * Splits a string by colons while respecting nested brackets and quotes
- * 
- * @private
- * @param string - The string to split
- * @returns An array of string parts
+ * Parameter type definition for templates
  */
-declare function splitRespectingColons(string: string): string[];
+export interface ReskiParameter {
+  /** The type of parameter (string, array, object) */
+  type: 'string' | 'array' | 'object';
+  /** The name or identifier of the parameter */
+  value: string;
+}
 
 /**
- * Splits a string by a delimiter while respecting nested brackets and quotes
- * 
- * @private
- * @param string - The string to split
- * @param delimiter - The delimiter to split by (defaults to '.')
- * @returns An array of string parts
+ * Template definition
  */
-declare function splitRespectingBrackets(string: string, delimiter?: string): string[];
+export interface ReskiTemplate {
+  /** The original template object */
+  o: ReskiComponent;
+  /** Parameter definitions, if any */
+  p?: ReskiParameter[];
+}
 
-export { ReskiObject, ReskiTextNode };
+/**
+ * Text node in the Reski component tree
+ */
+export interface ReskiTextNode {
+  /** Type identifier for text nodes */
+  name: 'text';
+  /** Content of the text node */
+  content?: any;
+  /** Dynamic expression for the text (used in templates) */
+  dynamic?: string;
+}
+
+/**
+ * A Reski Component definition
+ */
+export interface ReskiComponent {
+  /** Component name or tag */
+  name: string;
+  /** CSS classes (often Tailwind classes) */
+  classes?: string[];
+  /** Child components */
+  children?: (ReskiComponent | ReskiTextNode)[];
+  /** Component properties */
+  props?: Record<string, any>;
+  /** Template definitions */
+  template?: Record<string, ReskiTemplate>;
+  /** Raw parameters for template instantiation */
+  raw?: string[];
+  /** Loop parameters for generating multiple components */
+  loop?: string | any[];
+  /** Flag to hide component when used as template */
+  hideComp?: boolean;
+  /** Data context for component */
+  data?: Record<string, any>;
+  /** Parameters for template instantiation */
+  params?: Record<string, any>;
+}
+
+/**
+ * Parse a Reski string into a component object
+ * 
+ * @param string The Reski markup string to parse
+ * @param data Optional data context for expression evaluation
+ * @param options Parser options
+ * @param isRoot Whether this is the root component (internal use)
+ * @param isTemplate Whether this is being parsed as a template (internal use)
+ * @returns The parsed Reski component
+ */
+export default function parse(
+  string: string, 
+  data?: Record<string, any>, 
+  options?: ReskiParserOptions, 
+  isRoot?: boolean, 
+  isTemplate?: boolean
+): ReskiComponent;
+
+/**
+ * Helper function to evaluate expressions in the Reski context
+ * 
+ * @param expression The expression to evaluate
+ * @param context The data context for evaluation
+ * @returns The evaluated result
+ */
+export function evaluateExpression(
+  expression: string, 
+  context: Record<string, any>
+): any;

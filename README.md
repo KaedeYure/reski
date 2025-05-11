@@ -2,7 +2,7 @@
 
 <div align="center">
   <h2>[ R:e:s:k:i ]</h2>
-  <h3>A compact notation for UI components that brings the power of JSON to markup</h3>
+  <h3>A revolutionary component notation bridging code and content creation</h3>
 </div>
 
 <p align="center">
@@ -10,6 +10,7 @@
   <a href="#why-reski">Why Reski?</a> •
   <a href="#usage">Usage</a> •
   <a href="#examples">Examples</a> •
+  <a href="#syntax">Syntax</a> •
   <a href="#api">API</a> •
   <a href="#license">License</a>
 </p>
@@ -22,14 +23,19 @@ npm install reski
 
 ## Why Reski?
 
-Reski combines the best of component notation and data structures in a clean, compact syntax:
+Reski reimagines component-based UI development with a compact, intuitive syntax that both developers and content creators can master. It brings the structured power of programming to markup while remaining human-readable:
 
-- **🚀 Minimal & Compact** - Less verbose than JSX or HTML
-- **🔄 Two-way Conversion** - Parse strings to objects and back
-- **🧩 Component-oriented** - Perfect for modern UI development
-- **📦 Framework Agnostic** - Use with React, Vue, or vanilla JS
-- **🔌 Dynamic Data Binding** - Easy integration with your data
-- **🎯 Template Support** - Define once, use anywhere
+- **🚀 Minimal & Intuitive** - A clean, concise syntax that's easier to read and write than JSX or HTML
+- **🔄 Database-Friendly** - Store entire UI components and layouts directly in databases as strings
+- **🧩 Content Creator Empowerment** - Enable non-developers to build interactive components without coding knowledge
+- **📦 Framework Independence** - Works seamlessly with React, Vue, vanilla JS, or any modern framework
+- **🔌 Dynamic Data Integration** - Built-in expressions, transformations, and filtering capabilities
+- **🎯 Reusable Templates** - Define component patterns once, use them anywhere in your codebase
+- **🔁 Powerful Iteration** - Elegant syntax for rendering collections with advanced filtering and mapping
+
+Reski isn't just another template language—it's a bridge between developers and content creators, enabling true collaboration on interactive UIs without sacrificing power or flexibility.
+
+> Please note that Reski is developeded by a single individual, therefore it can include bugs and unexpected errors that were not tested. Please report in GitHub Issues if you come across any issue.
 
 ## Usage
 
@@ -44,7 +50,7 @@ const reskiString = Reski.reskify(component);
 
 // Evaluate dynamic expressions in a string
 const engraved = Reski.engrave('Hello, [(user.name)]!', { user: { name: 'World' } });
-// Result: 'Hello, ["World"]!'
+// Result: 'Hello, World!'
 ```
 
 ## Examples
@@ -53,7 +59,7 @@ const engraved = Reski.engrave('Hello, [(user.name)]!', { user: { name: 'World' 
 
 ```javascript
 // Reski Notation
-const buttonString = '[Button:primary large:["Click me"]]';
+const buttonString = '[Button:primary.large:["Click me"]]';
 
 // Parsed Result
 const button = Reski.parse(buttonString);
@@ -101,11 +107,11 @@ const card = Reski.parse(cardString);
 */
 ```
 
-### With Properties and Dynamic Data
+### With Properties and Dynamic Content
 
 ```javascript
 // Reski Notation
-const formString = '[Form::[Input:required::{"type":"text","placeholder":"Enter your name"}].[Button::["Submit"]]:{"onSubmit":"handleSubmit()"}::{"user":{"name":"John"}}]';
+const formString = '[Form::[Input:required::{"type":"text","placeholder":"Enter your name"}].[Button::["Submit"]]:{"onSubmit":"handleSubmit()"}]';
 
 // Parse with data
 const form = Reski.parse(formString);
@@ -123,13 +129,12 @@ const form = Reski.parse(formString);
       children: [{ name: "text", content: "Submit" }]
     }
   ],
-  props: { onSubmit: "handleSubmit()" },
-  data: { user: { name: "John" } }
+  props: { onSubmit: "handleSubmit()" }
 }
 */
 ```
 
-### Dynamic Content with Engrave
+### Dynamic Content
 
 ```javascript
 // Template with dynamic expressions
@@ -142,26 +147,56 @@ const data = {
   }
 };
 
-// Parse the string and evaluate expressions
-const processedString = Reski.engrave(template, data);
-// Result: '[User::["Hello, "].["Sarah"].["!"]]'
-
-// Now parse the processed string
-const component = Reski.parse(processedString);
+// Parse the template with data
+const component = Reski.parse(template, data);
+// Component will contain processed dynamic expressions
 ```
 
-### Templates and Reuse
+### Templates and Parameters
 
 ```javascript
 // Define a template
-const templateString = '[Container::[Card<"title","content">]::Card<"string","string">]';
+const templateString = '=[Card<title,content>: Card<"string","string">: [Title::[(title)]].[Content::[(content)]]]';
 
-// Create instances with parameters
-const instanceString = '[Container::[Card<"Welcome","This is a demo">].[Card<"Getting Started","Click here">]]';
+// Create an instance using the template
+const instanceString = '[Card<"Welcome","This is a demo">]';
 
 // Parse both
-const template = Reski.parse(templateString);
-const instance = Reski.parse(instanceString);
+const parsed = Reski.parse(templateString + instanceString);
+// The result will use the template with the given parameters
+```
+
+### Looping with ForEach
+
+```javascript
+// Using forEach to iterate over an array
+const listString = '[List::[items*[Item::["Item #"].[@(index)].[" - "].[@(item.name)]]]]';
+
+// Parse with data
+const list = Reski.parse(listString, {
+  items: [
+    { name: "First item" },
+    { name: "Second item" },
+    { name: "Third item" }
+  ]
+});
+/*
+{
+  name: "List",
+  children: [
+    {
+      name: "Item",
+      children: [
+        { name: "text", content: "Item #" },
+        { name: "text", content: "0" },
+        { name: "text", content: " - " },
+        { name: "text", content: "First item" }
+      ]
+    },
+    // ... similar structures for other items
+  ]
+}
+*/
 ```
 
 ## Syntax
@@ -169,7 +204,7 @@ const instance = Reski.parse(instanceString);
 ### Basic Format
 
 ```
-[Name:Classes:Children:Props:Template:Data]
+[Name:Classes:Children:Props]
 ```
 
 Where:
@@ -177,37 +212,65 @@ Where:
 - `Classes`: CSS classes (dot-separated)
 - `Children`: Nested components or text (dot-separated)
 - `Props`: Component properties (JSON)
-- `Template`: Template definition
-- `Data`: Dynamic data (JSON)
 
-And remember that it is order sensitive, where colons mark the order! Easy pattern to get used to!
+Each section is separated by colons and is position-sensitive.
 
 ### Text Content
 
 ```
-["Static text"]     // Static text
-[(user.name)]       // Dynamic text (evaluated with engrave)
+["Static text"]       // Static text
+[(expression)]       // Dynamic text expression
+[@(expression)]       // Dynamic text expression for renderer usage
 ```
 
 ### Parameters
 
 ```
-[Button<"primary","Click me">]   // Raw parameters
-[Card<{"title":"Welcome"}>]      // Object parameter
-[List<[1,2,3]>]                  // Array parameter
+[Button<"primary","Click me">]   // Parameters as strings
+[Card<title,content>]            // Parameters as variables
+```
+
+### ForEach Loops
+
+```
+[array*[Template]]                 // Basic loop
+[array:index*[Template]]           // With index variable
+[array->transform*[Template]]      // With transformation
+[array[condition]*[Template]]      // With filter condition
+```
+
+### Data Blocks
+
+```
+=<key: value>                      // Define data
+```
+
+### Template Blocks
+
+```
+=[TemplateName<param1,param2>: definition]   // Define template
 ```
 
 ## API
 
-### `Reski.parse(string, data?, options?)`
+### `Reski.parse(string, initialData?, options?)`
 
 Parses a Reski string into a component object.
 
 - `string`: Reski notation string
-- `data` (optional): Data object for variable substitution
+- `initialData` (optional): Initial data object for variable substitution
 - `options` (optional): Configuration options
   - `restrictOverwrite`: Array of data keys that shouldn't be overwritten
   - `debug`: Enable debug logging
+
+Returns:
+```javascript
+{
+  data: Object,      // Parsed data blocks
+  templates: Object, // Parsed template definitions
+  layout: Object     // The component structure
+}
+```
 
 ### `Reski.reskify(component, options?)`
 
@@ -217,12 +280,12 @@ Converts a component object back to a Reski string.
 - `options` (optional): Configuration options
   - `debug`: Enable debug logging
 
-### `Reski.engrave(string, data?)`
+### `Reski.engrave(expression, data?)`
 
-Processes dynamic expressions in a string.
+Evaluates a JavaScript expression within a given data context.
 
-- `string`: String with dynamic expressions `[(expression)]`
-- `data`: Data object for evaluation
+- `expression`: JavaScript expression as string
+- `data`: Data object for evaluation context
 
 ## License
 

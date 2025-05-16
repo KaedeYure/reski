@@ -1,6 +1,6 @@
 {
   "name": "reski",
-  "version": "3.0.2",
+  "version": "4.0.0",
   "description": "Reski is a declarative UI definition format that uses a structured, hierarchical syntax to describe component-based user interfaces.",
   "main": "index.js",
   "type": "module",

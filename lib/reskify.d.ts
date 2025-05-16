@@ -1,274 +1,190 @@
 /**
- * Type definitions for the Reskify library
- */
-
-/**
  * Options for the reskify function
  */
 export interface ReskifyOptions {
-  /**
-   * Enable debug mode to show error messages
-   * @default false
-   */
+  /** Enable detailed debug logging */
   debug?: boolean;
+  /** Keys that cannot be overwritten in dynamic data */
+  restrictOverwrite?: string[];
 }
 
 /**
- * Interface for a text child component
- */
-export interface TextComponent {
-  /**
-   * Name must be 'text' for text components
-   */
-  name: 'text';
-  
-  /**
-   * The static text content to display
-   */
-  content?: string;
-  
-  /**
-   * Dynamic expression for text content
-   * Format: @(expression)
-   */
-  dynamic?: string;
-
-  /**
-   * Expression for text content
-   */
-  expression?: string;
-
-  /**
-   * Error message if component has an error
-   */
-  error?: string;
-}
-
-/**
- * For Each loop configuration
- */
-export interface ForEachComponent {
-  /**
-   * Type identifier for forEach components
-   */
-  type: 'forEach';
-  
-  /**
-   * The name of the array to iterate over
-   */
-  arrayName: string;
-  
-  /**
-   * The template to use for each item
-   */
-  template: string;
-  
-  /**
-   * Optional filter expression
-   */
-  filter?: string | null;
-  
-  /**
-   * Optional map expression
-   */
-  map?: string | null;
-  
-  /**
-   * Optional index variable name
-   */
-  index?: string | null;
-}
-
-/**
- * Interface for a Reski component
- */
-export interface ReskiComponent {
-  /**
-   * Component name
-   */
-  name: string;
-  
-  /**
-   * Component parameters
-   */
-  params?: Record<string, any>;
-  
-  /**
-   * Raw parameters as string array
-   */
-  raw?: any[];
-  
-  /**
-   * CSS classes to apply to the component
-   */
-  classes?: string[];
-  
-  /**
-   * Child components
-   */
-  children?: (ReskiComponent | TextComponent | ForEachComponent)[];
-  
-  /**
-   * Component properties
-   */
-  props?: Record<string, any>;
-
-  /**
-   * Error message if component has an error
-   */
-  error?: string;
-}
-
-/**
- * Interface for a full parse result
- */
-export interface ReskiParseResult {
-  /**
-   * Data definitions
-   */
-  data?: Record<string, any>;
-  
-  /**
-   * Template definitions
-   */
-  templates?: Record<string, ReskiTemplate>;
-  
-  /**
-   * Layout component
-   */
-  layout?: ReskiComponent;
-}
-
-/**
- * Interface for a template definition
- */
-export interface ReskiTemplate {
-  /**
-   * The template definition (component)
-   */
-  definition: ReskiComponent;
-  
-  /**
-   * Whether this is a placeholder template
-   */
-  placeholder?: boolean;
-  
-  /**
-   * Template parameters
-   */
-  parameters?: Array<{value: any}>;
-}
-
-/**
- * Converts a Reski component object to its string representation
+ * Convert a Reski component or parse result back to a Reski markup string
  * 
- * @param input - The component or parse result to convert
- * @param options - Optional configuration
- * @returns The string representation of the component
- * @throws {Error} If the component is invalid
+ * @param input The Reski component or parse result to convert
+ * @param options Options for the conversion process
+ * @returns The Reski markup string
  */
 export default function reskify(
-  input: ReskiComponent | TextComponent | ForEachComponent | ReskiParseResult, 
+  input: ReskiComponent | ParseResult,
   options?: ReskifyOptions
 ): string;
 
 /**
- * Converts a full parse result to its string representation
+ * Convert a full parse result (data, templates, layout) to a Reski markup string
  * 
- * @param parseResult - The parse result to convert
- * @param options - Optional configuration
- * @returns The string representation
+ * @param parseResult The parse result to convert
+ * @param options Options for the conversion process
+ * @returns The Reski markup string
  */
 export function reskifyFull(
-  parseResult: ReskiParseResult,
+  parseResult: ParseResult,
   options?: ReskifyOptions
 ): string;
 
 /**
- * Converts a single component to its string representation
+ * Convert a Reski component to a Reski markup string
  * 
- * @param component - The component to convert
- * @param options - Optional configuration
- * @returns The string representation
+ * @param component The component to convert
+ * @param options Options for the conversion process
+ * @returns The Reski markup string
  */
 export function reskifyComponent(
-  component: ReskiComponent | TextComponent | ForEachComponent,
+  component: ReskiComponent,
   options?: ReskifyOptions
 ): string;
 
 /**
- * Formats the component name section of a Reski string
+ * Format a component name with parameters
  * 
- * @param component - The component to process
- * @returns The name section string
+ * @param component The component to format
+ * @returns The formatted component name string
  */
-export function formatComponentName(component: ReskiComponent): string;
-
-/**
- * Formats a parameter value for the component name
- * 
- * @param value - The parameter value to format
- * @returns The formatted parameter value
- */
-export function formatParamValue(value: any): string;
-
-/**
- * Formats the classes section of a Reski string
- * 
- * @param component - The component to process
- * @returns The classes section string
- */
-export function formatClasses(component: ReskiComponent): string;
-
-/**
- * Formats the children section of a Reski string
- * 
- * @param component - The component to process
- * @param options - The reskify options
- * @returns The children section string
- */
-export function formatChildren(
-  component: ReskiComponent, 
-  options: ReskifyOptions
+export function formatComponentName(
+  component: ReskiComponent
 ): string;
 
 /**
- * Formats a text child component string
+ * Format a raw parameter value based on its type
  * 
- * @param child - The text component to process
- * @returns The string representation of the text component
+ * @param type The type of the parameter
+ * @param value The value to format
+ * @returns The formatted parameter value string
  */
-export function formatTextChild(child: TextComponent): string;
+export function formatRawParamValue(
+  type: string,
+  value: any
+): string;
 
 /**
- * Formats a forEach child component string
+ * Format a parameter value for inclusion in a Reski markup string
  * 
- * @param child - The forEach component to process
- * @param options - The reskify options
- * @returns The string representation of the forEach component
+ * @param value The value to format
+ * @returns The formatted parameter value string
  */
-export function formatForEachChild(child: ForEachComponent, options: ReskifyOptions): string;
+export function formatParamValue(
+  value: any
+): string;
 
 /**
- * Formats the array part of a forEach component
+ * Format component classes for inclusion in a Reski markup string
  * 
- * @param child - The forEach component to process
- * @returns The formatted array part string
+ * @param component The component containing classes
+ * @returns The formatted classes string
  */
-export function formatForEachArray(child: ForEachComponent): string;
+export function formatClasses(
+  component: ReskiComponent
+): string;
 
 /**
- * Formats the props section of a Reski string
+ * Format component children for inclusion in a Reski markup string
  * 
- * @param component - The component to process
- * @returns The props section string
+ * @param component The component containing children
+ * @param options Options for the conversion process
+ * @returns The formatted children string
  */
-export function formatProps(component: ReskiComponent): string;
+export function formatChildren(
+  component: ReskiComponent,
+  options?: ReskifyOptions
+): string;
 
 /**
- * Helper function to escape strings for proper serialization
+ * Format a text child component for inclusion in a Reski markup string
  * 
- * @param str - The string to escape
+ * @param child The text child component
+ * @returns The formatted text child string
+ */
+export function formatTextChild(
+  child: ReskiTextNode
+): string;
+
+/**
+ * Format component properties for inclusion in a Reski markup string
+ * 
+ * @param component The component containing properties
+ * @returns The formatted properties string
+ */
+export function formatProps(
+  component: ReskiComponent
+): string;
+
+/**
+ * Escape special characters in a string for inclusion in a Reski markup string
+ * 
+ * @param str The string to escape
  * @returns The escaped string
  */
-export function escapeString(str: string | any): string;
+export function escapeString(
+  str: string | null | undefined
+): string;
+
+/**
+ * Interface representing a parse result
+ */
+export interface ParseResult {
+  /** Dynamic data object */
+  data?: Record<string, any>;
+  /** Template definitions */
+  templates?: Record<string, Template>;
+  /** Layout component */
+  layout?: ReskiComponent | null;
+}
+
+/**
+ * Interface representing a template
+ */
+export interface Template {
+  /** Template definition */
+  definition: Record<string, any>;
+  /** Whether this is a placeholder template */
+  placeholder?: boolean;
+  /** Template parameters */
+  parameters?: any[];
+}
+
+/**
+ * Interface representing a Reski component
+ */
+export interface ReskiComponent {
+  /** Component name */
+  name: string;
+  /** Component error message */
+  error?: string;
+  /** Component classes */
+  classes?: string[];
+  /** Component children */
+  children?: (ReskiComponent | ReskiTextNode)[];
+  /** Component properties */
+  props?: Record<string, any>;
+  /** Raw parameters for parameterized components */
+  raw?: any[];
+  /** Mapping information */
+  map?: {
+    /** Mapping type */
+    type: 'undefined' | 'reference' | 'array';
+    /** Mapping value */
+    value: any;
+  };
+}
+
+/**
+ * Interface representing a Reski text node
+ */
+export interface ReskiTextNode {
+  /** Component name, always 'text' */
+  name: 'text';
+  /** Text content */
+  content?: string;
+  /** Dynamic text content reference */
+  dynamic?: string;
+}

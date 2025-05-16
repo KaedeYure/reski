@@ -8,5 +8,4 @@ export interface Reski {
     engrave: typeof engrave;
 }
 
-declare const Reski: Reski;
 export default Reski;

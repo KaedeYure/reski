@@ -9,6 +9,7 @@
   <a href="#installation">Installation</a> •
   <a href="#why-reski">Why Reski?</a> •
   <a href="#usage">Usage</a> •
+  <a href="#integration">Integration</a> •
   <a href="#examples">Examples</a> •
   <a href="#syntax">Syntax</a> •
   <a href="#api">API</a> •
@@ -31,11 +32,13 @@ Reski reimagines component-based UI development with a compact, intuitive syntax
 - **📦 Framework Independence** - Works seamlessly with React, Vue, vanilla JS, or any modern framework
 - **🔌 Dynamic Data Integration** - Built-in expressions, transformations, and filtering capabilities
 - **🎯 Reusable Templates** - Define component patterns once, use them anywhere in your codebase
-- **🔁 Powerful Iteration** - Elegant syntax for rendering collections with advanced filtering and mapping
+- **🔁 Powerful Iteration** - Elegant syntax for rendering collections with advanced mapping
 
 Reski isn't just another template language—it's a bridge between developers and content creators, enabling true collaboration on interactive UIs without sacrificing power or flexibility.
 
-> Please note that Reski is developeded by a single individual, therefore it can include bugs and unexpected errors that were not tested. Please report in GitHub Issues if you come across any issue.
+> Please note that Reski is developed by a single individual, therefore it can include bugs and unexpected errors that were not tested. Please report in GitHub Issues if you come across any issue.
+
+> Reski gets regular updates on dev-side and is updated publicly once in a while.
 
 ## Usage
 
@@ -52,6 +55,46 @@ const reskiString = Reski.reskify(component);
 const engraved = Reski.engrave('Hello, [(user.name)]!', { user: { name: 'World' } });
 // Result: 'Hello, World!'
 ```
+
+## Integration
+
+### React Integration
+
+Reski provides a React context provider for easy integration with React applications:
+
+```jsx
+import { ReskiProvider, useReski } from 'reski/adapters/react';
+
+// Wrap your app with the provider
+function App() {
+  return (
+    <ReskiProvider>
+      <YourComponents />
+    </ReskiProvider>
+  );
+}
+
+// Use Reski in your components
+function YourComponent() {
+  const { Render, parse, reskify } = useReski();
+  
+  return (
+    <div>
+      {/* Render a Reski string */}
+      <Render 
+        string="[Card::[Header::['Title']].[Body::['Content']]]" 
+        data={{ /* your data */ }}
+        parseOptions={{ /* options */ }}
+      />
+    </div>
+  );
+}
+```
+
+The React adapter automatically:
+- Loads components from your project's `components` directory
+- Handles styling with Twind (Tailwind in JS)
+- Provides convenient parsing and rendering utilities
 
 ## Examples
 
@@ -166,11 +209,11 @@ const parsed = Reski.parse(templateString + instanceString);
 // The result will use the template with the given parameters
 ```
 
-### Looping with ForEach
+### Mapping with Array Data
 
 ```javascript
-// Using forEach to iterate over an array
-const listString = '[List::[items*[Item::["Item #"].[@(index)].[" - "].[@(item.name)]]]]';
+// Using map to iterate over an array
+const listString = '[List::[Item[items]]]';
 
 // Parse with data
 const list = Reski.parse(listString, {
@@ -180,23 +223,6 @@ const list = Reski.parse(listString, {
     { name: "Third item" }
   ]
 });
-/*
-{
-  name: "List",
-  children: [
-    {
-      name: "Item",
-      children: [
-        { name: "text", content: "Item #" },
-        { name: "text", content: "0" },
-        { name: "text", content: " - " },
-        { name: "text", content: "First item" }
-      ]
-    },
-    // ... similar structures for other items
-  ]
-}
-*/
 ```
 
 ## Syntax
@@ -219,8 +245,8 @@ Each section is separated by colons and is position-sensitive.
 
 ```
 ["Static text"]       // Static text
-[(expression)]       // Dynamic text expression
-[@(expression)]       // Dynamic text expression for renderer usage
+[(expression)]        // Dynamic text expression (evaluated during parsing)
+[@(expression)]       // Dynamic text expression (evaluated during rendering)
 ```
 
 ### Parameters
@@ -230,19 +256,16 @@ Each section is separated by colons and is position-sensitive.
 [Card<title,content>]            // Parameters as variables
 ```
 
-### ForEach Loops
+### Mapping with Arrays
 
 ```
-[array*[Template]]                 // Basic loop
-[array:index*[Template]]           // With index variable
-[array->transform*[Template]]      // With transformation
-[array[condition]*[Template]]      // With filter condition
+[Component[arrayReference]]      // Map over array
 ```
 
 ### Data Blocks
 
 ```
-=<key: value>                      // Define data
+=<key: value>                    // Define data
 ```
 
 ### Template Blocks
@@ -260,8 +283,10 @@ Parses a Reski string into a component object.
 - `string`: Reski notation string
 - `initialData` (optional): Initial data object for variable substitution
 - `options` (optional): Configuration options
-  - `restrictOverwrite`: Array of data keys that shouldn't be overwritten
-  - `debug`: Enable debug logging
+  - `restrictOverwrite`: Array of data keys that shouldn't be overwritten (default: `["user", "auth", "token"]`)
+  - `debug`: Enable debug logging (default: `false`)
+  - `convertTemplatesToDivs`: Convert template components to divs with data-template attribute (default: `true`)
+  - `keepParams`: Keep params in the output (default: `false`)
 
 Returns:
 ```javascript
@@ -278,7 +303,8 @@ Converts a component object back to a Reski string.
 
 - `component`: Component object
 - `options` (optional): Configuration options
-  - `debug`: Enable debug logging
+  - `debug`: Enable debug logging (default: `false`)
+  - `restrictOverwrite`: Array of data keys that shouldn't be included (default: `["user", "auth", "token"]`)
 
 ### `Reski.engrave(expression, data?)`
 
@@ -286,6 +312,31 @@ Evaluates a JavaScript expression within a given data context.
 
 - `expression`: JavaScript expression as string
 - `data`: Data object for evaluation context
+
+### React Integration
+
+#### `ReskiProvider`
+
+React context provider for Reski.
+
+```jsx
+<ReskiProvider>
+  {children}
+</ReskiProvider>
+```
+
+#### `useReski()`
+
+React hook to access Reski functionality.
+
+Returns:
+```javascript
+{
+  Render: Component,  // Component to render Reski strings
+  parse: Function,    // Parse function
+  reskify: Function   // Reskify function
+}
+```
 
 ## License
 

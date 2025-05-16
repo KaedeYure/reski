@@ -10,16 +10,30 @@ export interface ReskiParserOptions {
   restrictOverwrite?: string[];
   /** Enable detailed debug logging */
   debug?: boolean;
+  /** Convert templates to div elements with data-template attribute */
+  convertTemplatesToDivs?: boolean;
+  /** Keep params in the output */
+  keepParams?: boolean;
 }
 
 /**
- * Parameter type definition for templates
+ * Raw parameter value with type information
  */
-export interface ReskiParameter {
-  /** The type of parameter (string, array, object) */
-  type: 'string' | 'array' | 'object';
-  /** The name or identifier of the parameter */
-  value: string;
+export interface RawParameter {
+  /** The type of the parameter */
+  type: 'string' | 'array' | 'object' | 'boolean' | 'number' | 'any' | 'reference';
+  /** The value of the parameter */
+  value: any;
+}
+
+/**
+ * Map configuration for component mapping
+ */
+export interface MapConfig {
+  /** The type of map (array or reference) */
+  type: 'array' | 'reference' | 'undefined';
+  /** The value to map over */
+  value: any;
 }
 
 /**
@@ -27,9 +41,9 @@ export interface ReskiParameter {
  */
 export interface ReskiTemplate {
   /** The template definition component */
-  definition: ReskiComponent;
+  definition?: ReskiComponent;
   /** Parameter definitions, if any */
-  parameters?: ReskiParameter[];
+  parameters?: RawParameter[];
   /** Whether this is a placeholder template (pre-registered but not fully processed) */
   placeholder?: boolean;
 }
@@ -47,24 +61,6 @@ export interface ReskiTextNode {
 }
 
 /**
- * ForEach configuration for generating dynamic component lists
- */
-export interface ForEachConfig {
-  /** Type identifier for forEach constructs */
-  type: 'forEach';
-  /** The name of the array to iterate over */
-  arrayName: string;
-  /** The template to use for rendering each item */
-  template: string;
-  /** Optional filter expression to filter array items */
-  filter: string | null;
-  /** Optional map expression to transform array items */
-  map: string | null;
-  /** Optional variable name to store the current index */
-  index: string | null;
-}
-
-/**
  * A Reski Component definition
  */
 export interface ReskiComponent {
@@ -73,25 +69,29 @@ export interface ReskiComponent {
   /** CSS classes (often Tailwind classes) */
   classes?: string[];
   /** Child components */
-  children?: (ReskiComponent | ReskiTextNode | ForEachConfig)[];
+  children?: (ReskiComponent | ReskiTextNode)[];
   /** Component properties */
   props?: Record<string, any>;
   /** Raw parameters for template instantiation */
-  raw?: string[];
+  raw?: RawParameter[];
   /** Parameters for template instantiation */
   params?: Record<string, any>;
+  /** Map configuration for generating components from arrays */
+  map?: MapConfig;
   /** Flag for pending template processing */
   _pendingTemplate?: boolean;
+  /** Flag for processed template */
+  _processedTemplate?: boolean;
   /** Error information if parsing failed */
   error?: string;
 }
 
 /**
- * Data definition parsing result
+ * Data block parsing result
  */
-export interface DataDefinitionResult {
-  /** Type identifier for data definition results */
-  type: 'dataDefinition';
+export interface DataBlockResult {
+  /** Type identifier for data block results */
+  type: 'data';
   /** The name of the defined data */
   name?: string;
   /** The value of the defined data */
@@ -103,15 +103,15 @@ export interface DataDefinitionResult {
 }
 
 /**
- * Template definition parsing result
+ * Template block parsing result
  */
-export interface TemplateDefinitionResult {
-  /** Type identifier for template definition results */
-  type: 'templateDefinition';
+export interface TemplateBlockResult {
+  /** Type identifier for template block results */
+  type: 'template';
   /** The name of the defined template */
   name?: string;
   /** The parameter definitions */
-  parameters?: ReskiParameter[];
+  parameters?: RawParameter[];
   /** The template definition component */
   definition?: ReskiComponent;
   /** Error message if parsing failed */
@@ -175,36 +175,87 @@ export function findMatchingDelimiter(
 ): number;
 
 /**
- * Parse a data definition block
+ * Parse a data block
  * 
  * @param block The data block string
  * @param data The current data context
  * @param restrictOverwrite Array of keys that cannot be overwritten
  * @param debug Whether to enable debug logging
- * @returns The parsed data definition result
+ * @returns The parsed data block result
  */
 export function parseDataBlock(
   block: string,
   data: Record<string, any>,
   restrictOverwrite: string[],
   debug: boolean
-): DataDefinitionResult;
+): DataBlockResult;
 
 /**
- * Parse a template definition block
+ * Pre-register templates to handle forward references
+ * 
+ * @param templateBlocks Array of template block strings
+ * @param templates The templates registry
+ * @param debug Whether to enable debug logging
+ */
+export function preRegisterTemplates(
+  templateBlocks: string[],
+  templates: Record<string, ReskiTemplate>,
+  debug: boolean
+): void;
+
+/**
+ * Parse a template block
  * 
  * @param block The template block string
  * @param data The current data context
  * @param templates The templates registry
  * @param debug Whether to enable debug logging
- * @returns The parsed template definition result
+ * @returns The parsed template block result
  */
 export function parseTemplateBlock(
   block: string,
   data: Record<string, any>,
   templates: Record<string, ReskiTemplate>,
   debug: boolean
-): TemplateDefinitionResult;
+): TemplateBlockResult;
+
+/**
+ * Extract template parameters from a name match
+ * 
+ * @param name The name match result
+ * @param debug Whether to enable debug logging
+ * @returns Array of parameter definitions
+ */
+export function extractTemplateParameters(
+  name: RegExpMatchArray,
+  debug: boolean
+): RawParameter[];
+
+/**
+ * Process pending templates in a component tree
+ * 
+ * @param component The component to process
+ * @param templates The templates registry
+ * @param data The current data context
+ * @param debug Whether to enable debug logging
+ * @returns The processed component
+ */
+export function processPendingTemplates(
+  component: ReskiComponent,
+  templates: Record<string, ReskiTemplate>,
+  data: Record<string, any>,
+  debug: boolean
+): ReskiComponent;
+
+/**
+ * Check if there are pending templates in a component tree
+ * 
+ * @param comp The component to check
+ * @returns True if there are pending templates
+ */
+export function checkForPendingTemplates(
+  comp: ReskiComponent
+): boolean;
 
 /**
  * Parse a component block
@@ -223,6 +274,29 @@ export function parseComponentBlock(
 ): ReskiComponent;
 
 /**
+ * Extract component parameters from a name match
+ * 
+ * @param nameMatch The name match result
+ * @param result The component to update with parameters
+ * @param debug Whether to enable debug logging
+ */
+export function extractComponentParameters(
+  nameMatch: RegExpMatchArray,
+  result: ReskiComponent,
+  debug: boolean
+): void;
+
+/**
+ * Parse CSS classes from a class string
+ * 
+ * @param classesStr The class string
+ * @returns Array of parsed classes
+ */
+export function parseClasses(
+  classesStr: string
+): string[];
+
+/**
  * Parse children from a component children string
  * 
  * @param childString The children string
@@ -236,7 +310,7 @@ export function parseChildren(
   data: Record<string, any>,
   templates: Record<string, ReskiTemplate>,
   debug: boolean
-): (ReskiComponent | ReskiTextNode | ForEachConfig)[];
+): (ReskiComponent | ReskiTextNode)[];
 
 /**
  * Parse properties from a component props string
@@ -251,24 +325,29 @@ export function parseProps(
 ): Record<string, any>;
 
 /**
- * Parse a forEach configuration from a forEach string
+ * Process components with map and raw configurations
  * 
- * @param forEachString The forEach string
- * @returns The parsed forEach configuration
+ * @param components Array of components to process
+ * @param templates The templates registry
+ * @param data The current data context
+ * @param debug Whether to enable debug logging
  */
-export function parseForEachConfig(
-  forEachString: string
-): ForEachConfig;
+export function processComponentsWithMapAndRaw(
+  components: (ReskiComponent | ReskiTextNode)[],
+  templates: Record<string, ReskiTemplate>,
+  data: Record<string, any>,
+  debug: boolean
+): void;
 
 /**
- * Process forEach loops in a component
+ * Process raw parameters in a component
  * 
  * @param component The component to process
  * @param templates The templates registry
  * @param data The current data context
  * @param debug Whether to enable debug logging
  */
-export function processForEachLoops(
+export function processRaw(
   component: ReskiComponent,
   templates: Record<string, ReskiTemplate>,
   data: Record<string, any>,
@@ -276,61 +355,55 @@ export function processForEachLoops(
 ): void;
 
 /**
- * Render a forEach configuration into an array of components
+ * Recursively apply raw parameters to children
  * 
- * @param forEachConfig The forEach configuration
- * @param templates The templates registry
- * @param data The current data context
- * @param debug Whether to enable debug logging
- * @returns Array of rendered components
+ * @param children Array of child components
+ * @param params The parameters to apply
+ * @returns Array of processed child components
  */
-export function renderForEach(
-  forEachConfig: ForEachConfig,
-  templates: Record<string, ReskiTemplate>,
-  data: Record<string, any>,
-  debug: boolean
-): ReskiComponent[];
+export function recurseRawParams(
+  children: (ReskiComponent | ReskiTextNode)[],
+  params: Record<string, any>
+): (ReskiComponent | ReskiTextNode)[];
 
 /**
- * Process template parameters in a component
+ * Process map configuration in a component
  * 
  * @param component The component to process
  * @param templates The templates registry
  * @param data The current data context
  * @param debug Whether to enable debug logging
+ * @returns Array of mapped components
  */
-export function processTemplateParams(
+export function processMap(
   component: ReskiComponent,
   templates: Record<string, ReskiTemplate>,
   data: Record<string, any>,
   debug: boolean
-): void;
+): ReskiComponent[] | null;
 
 /**
- * Process a parameter value
+ * Recursively apply map parameters to children
  * 
- * @param paramValue The parameter value string
+ * @param children Array of child components
+ * @param params The parameters to apply
+ * @returns Array of processed child components
+ */
+export function recurseMapParams(
+  children: (ReskiComponent | ReskiTextNode)[],
+  params: Record<string, any>
+): (ReskiComponent | ReskiTextNode)[];
+
+/**
+ * Process dynamic values in a component tree
+ * 
+ * @param component The component to process
  * @param data The current data context
- * @param debug Whether to enable debug logging
- * @returns The processed parameter value
  */
-export function processParamValue(
-  paramValue: string,
-  data: Record<string, any>,
-  debug: boolean
-): any;
-
-/**
- * Extract template parameters from a template string
- * 
- * @param templateString The template string
- * @param debug Whether to enable debug logging
- * @returns Array of parameter definitions
- */
-export function extractTemplateParameters(
-  templateString: string,
-  debug: boolean
-): ReskiParameter[];
+export function processDynamicValues(
+  component: ReskiComponent | ReskiTextNode,
+  data?: Record<string, any>
+): void;
 
 /**
  * Split a string by a delimiter, respecting brackets and quotes
@@ -356,6 +429,15 @@ export function cleanupEmptyProperties(
 ): void;
 
 /**
+ * Remove internal properties from a component tree
+ * 
+ * @param comp The component to clean up
+ */
+export function cleanupInternalProps(
+  comp: ReskiComponent
+): void;
+
+/**
  * Remove unsafe values (like functions) from an object
  * 
  * @param obj The object to process
@@ -365,39 +447,46 @@ export function removeUnsafeValues(
 ): void;
 
 /**
- * Check if an object contains functions
+ * Convert template components to div elements
  * 
- * @param obj The object to check
- * @returns True if the object contains functions
+ * @param component The component to process
+ * @param templates The templates registry
  */
-export function containsFunctions(
-  obj: Record<string, any>
-): boolean;
+export function convertTemplatesToElements(
+  component: ReskiComponent,
+  templates: Record<string, ReskiTemplate>
+): void;
+
+/**
+ * Remove params from a component tree
+ * 
+ * @param component The component to clean up
+ */
+export function cleanupParams(
+  component: ReskiComponent
+): void;
 
 /**
  * Check if a value matches an expected type
  * 
- * @param value The value to check
+ * @param providedType The provided type
  * @param expectedType The expected type
- * @returns True if the value matches the expected type
+ * @returns True if the provided type matches the expected type
  */
 export function isValidType(
-  value: any,
+  providedType: any,
   expectedType: string
 ): boolean;
 
 /**
- * Process pending templates in a component tree
+ * Log a debug message
  * 
- * @param component The component to process
- * @param templates The templates registry
- * @param data The current data context
- * @param debug Whether to enable debug logging
- * @returns The processed component
+ * @param debug Whether debug logging is enabled
+ * @param message The message to log
+ * @param isError Whether this is an error message
  */
-export function processPendingTemplates(
-  component: ReskiComponent,
-  templates: Record<string, ReskiTemplate>,
-  data: Record<string, any>,
-  debug: boolean
-): ReskiComponent;
+export function logDebug(
+  debug: boolean,
+  message: string,
+  isError?: boolean
+): void;
